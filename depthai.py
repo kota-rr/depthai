@@ -37,7 +37,7 @@ def show_tracklets(tracklets, frame):
 
         # print("left: {0} top: {1} right: {2}, bottom: {3}, id: {4}, label: {5}, status: {6} "\
         #     .format(left_coord, top_coord, right_coord, bottom_coord, tracklet_id, tracklet_label, tracklet_status))
-        
+
         pt1 = left_coord,  top_coord
         pt2 = right_coord,  bottom_coord
         color = (255, 0, 0) # bgr
@@ -56,7 +56,7 @@ def show_tracklets(tracklets, frame):
         cv2.putText(frame, tracklet_status, pt_t2, cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
 
-        
+
     return frame
 
 def decode_mobilenet_ssd(nnet_packet):
@@ -132,7 +132,7 @@ def decode_age_gender_recognition(nnet_packet):
     detections = []
     for _, e in enumerate(nnet_packet.entries()):
         if e[1]["female"] > 0.8 or e[1]["male"] > 0.8:
-            detections.append(e[0]["age"])  
+            detections.append(e[0]["age"])
             if e[1]["female"] > e[1]["male"]:
                 detections.append("female")
             else:
@@ -180,7 +180,7 @@ def decode_landmarks_recognition(nnet_packet):
     landmarks = []
     for i in range(len(nnet_packet.entries()[0][0])):
         landmarks.append(nnet_packet.entries()[0][0][i])
-    
+
     landmarks = list(zip(*[iter(landmarks)]*2))
     return landmarks
 
@@ -208,7 +208,7 @@ try:
 except:
     os._exit(2)
 
- 
+
 stream_list = args['streams']
 
 if args['config_overwrite']:
@@ -308,7 +308,7 @@ config = {
         'calibration_file': consts.resource_paths.calib_fpath,
         'padding_factor': 0.3,
         'depth_limit_m': 10.0, # In meters, for filtering purpose during x,y,z calc
-        'confidence_threshold' : 0.5, #Depth is calculated for bounding boxes with confidence higher than this number 
+        'confidence_threshold' : 0.5, #Depth is calculated for bounding boxes with confidence higher than this number
     },
     'ai':
     {
@@ -334,7 +334,7 @@ config = {
         'clear_eeprom': args['clear_eeprom'],
         'override_eeprom': args['override_eeprom'],
     },
-    
+
     #'video_config':
     #{
     #    'rateCtrlMode': 'cbr',
@@ -369,7 +369,7 @@ if 'depth_sipp' in config['streams'] and ('depth_color_h' in config['streams'] o
 # Append video stream if video recording was requested and stream is not already specified
 video_file = None
 if args['video'] is not None:
-    
+
     # open video file
     try:
         video_file = open(args['video'], 'wb')
@@ -379,7 +379,7 @@ if args['video'] is not None:
         print("Error: couldn't open video file for writing. Disabled video output stream")
         if config['streams'].count('video') == 1:
             config['streams'].remove('video')
-    
+
 
 stream_names = [stream if isinstance(stream, str) else stream['name'] for stream in config['streams']]
 
@@ -418,7 +418,7 @@ while True:
     # retreive data from the device
     # data is stored in packets, there are nnet (Neural NETwork) packets which have additional functions for NNet result interpretation
     nnet_packets, data_packets = p.get_available_nnet_and_data_packets()
-    
+
     packets_len = len(nnet_packets) + len(data_packets)
     if packets_len != 0:
         reset_process_wd()
@@ -426,7 +426,7 @@ while True:
         cur_time=monotonic()
         if cur_time > wd_cutoff:
             print("process watchdog timeout")
-            os._exit(1)
+            os._exit(10)
 
     for _, nnet_packet in enumerate(nnet_packets):
         entries_prev = decode_nn(nnet_packet)
@@ -439,7 +439,7 @@ while True:
             print('Invalid packet data!')
             continue
         elif packet.stream_name == 'previewout':
-            
+
             # the format of previewout image is CHW (Chanel, Height, Width), but OpenCV needs HWC, so we
             # change shape (3, 300, 300) -> (300, 300, 3)
             data0 = packetData[0,:,:]
@@ -489,7 +489,7 @@ while True:
         elif packet.stream_name == 'video':
             videoFrame = packetData
             videoFrame.tofile(video_file)
-        
+
         elif packet.stream_name == 'meta_d2h':
             str_ = packet.getDataAsStr()
             dict_ = json.loads(str_)
@@ -498,7 +498,7 @@ while True:
                 ' CSS:' + '{:6.2f}'.format(dict_['sensors']['temperature']['css']),
                 ' MSS:' + '{:6.2f}'.format(dict_['sensors']['temperature']['mss']),
                 ' UPA:' + '{:6.2f}'.format(dict_['sensors']['temperature']['upa0']),
-                ' DSS:' + '{:6.2f}'.format(dict_['sensors']['temperature']['upa1']))            
+                ' DSS:' + '{:6.2f}'.format(dict_['sensors']['temperature']['upa1']))
         elif packet.stream_name == 'object_tracker':
             tracklets = packet.getObjectTracker()
 
@@ -534,4 +534,3 @@ if video_file is not None:
     video_file.close()
 
 print('py: DONE.')
-
