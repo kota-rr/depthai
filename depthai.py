@@ -405,7 +405,7 @@ for s in stream_names:
 entries_prev = []
 tracklets = None
 
-process_watchdog_timeout=10 #seconds
+process_watchdog_timeout=1 #seconds
 def reset_process_wd():
     global wd_cutoff
     wd_cutoff=monotonic()+process_watchdog_timeout
@@ -426,7 +426,7 @@ while True:
         cur_time=monotonic()
         if cur_time > wd_cutoff:
             print("process watchdog timeout")
-            os._exit(10)
+            os._exit(1)
 
     for _, nnet_packet in enumerate(nnet_packets):
         entries_prev = decode_nn(nnet_packet)
